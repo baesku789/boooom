@@ -108,13 +108,11 @@ io.on("connection", (socket) => {
 
     for (let id in userList) {
       if (id === socket.id) {
-        const userName = userList[id];
-        const index = userNames.indexOf(userName);
-        if (index > -1) {
-          userNames.splice(index, 1);
-        }
+        delete userList[id];
       }
     }
+
+    userNames = Object.values(userList);
 
     // emiting a signal and sending it to everyone that a user left
     socket.broadcast.emit("user left", socket.id, userNames);
