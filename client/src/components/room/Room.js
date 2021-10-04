@@ -12,24 +12,18 @@ const videoConstraints = {
   width: window.innerWidth / 2,
 };
 
-const displayMediaOptions = {
-  video: {
-    cursor: "always",
-  },
-  audio: false,
-};
-
 const Room = ({ match, location }) => {
   // variables for different functionalities of video call
   const [peers, setPeers] = useState([]);
+  const peerRef = useRef();
   const [chat, setChat] = useState("");
   const [userNames, setUserNames] = useState([]);
-  const [screen, setscreen] = useState(false);
+  const [screen, setScreen] = useState(false);
   const socketRef = useRef();
   const userVideo = useRef();
   const peersRef = useRef([]);
   const userStream = useRef();
-  const senders = useRef([]);
+  const screenTrackRef = useRef();
   const { roomID } = match.params;
   const { username } = location.state;
 
@@ -71,6 +65,7 @@ const Room = ({ match, location }) => {
           // adding the new user to the group
           users.forEach((userID) => {
             const peer = createPeer(userID, socketRef.current.id, stream);
+            peerRef.current = peer;
             peersRef.current.push({
               peerID: userID,
               peer,
@@ -87,6 +82,7 @@ const Room = ({ match, location }) => {
         socketRef.current.on("user joined", (payload, userNames) => {
           console.log("on user joined");
           const peer = addPeer(payload.signal, payload.callerID, stream);
+          peerRef.current = peer;
           peersRef.current.push({
             peerID: payload.callerID,
             peer,
@@ -133,7 +129,6 @@ const Room = ({ match, location }) => {
       initiator: true,
       trickle: false,
       stream,
-      wrtc: RTCPeerConnection,
     });
 
     peer.on("signal", (signal) => {
@@ -154,7 +149,6 @@ const Room = ({ match, location }) => {
       initiator: false,
       trickle: false,
       stream,
-      wrtc: RTCPeerConnection,
     });
 
     peer.on("signal", (signal) => {
@@ -214,28 +208,45 @@ const Room = ({ match, location }) => {
 
   // Sharing the Screen
   async function shareScreen() {
-    setscreen(true);
+    if (!screen) {
+      navigator.mediaDevices
+        .getDisplayMedia({ cursor: true })
+        .then((stream) => {
+          const screenTrack = stream.getTracks()[0];
 
-    return navigator.mediaDevices
-      .getDisplayMedia(displayMediaOptions)
-      .then((stream) => {
-        userVideo.current.srcObject = stream;
-        userStream.current = stream;
-      })
-      .catch((err) => {
-        console.error("Error:" + err);
-        return null;
-      });
-  }
+          peersRef.current.forEach(({ peer }) => {
+            // replaceTrack (oldTrack, newTrack, oldStream);
+            peer.replaceTrack(
+              peer.streams[0]
+                .getTracks()
+                .find((track) => track.kind === "video"),
+              screenTrack,
+              userStream.current
+            );
+          });
 
-  // stopping screen share
-  function stopShare() {
-    setscreen(false);
+          // Listen click end
+          screenTrack.onended = () => {
+            peersRef.current.forEach(({ peer }) => {
+              peer.replaceTrack(
+                screenTrack,
+                peer.streams[0]
+                  .getTracks()
+                  .find((track) => track.kind === "video"),
+                userStream.current
+              );
+            });
+            userVideo.current.srcObject = userStream.current;
+            setScreen(false);
+          };
 
-    let tracks = userVideo.current.srcObject.getTracks();
-
-    tracks.forEach((track) => track.stop());
-    userVideo.current.srcObject = null;
+          userVideo.current.srcObject = stream;
+          screenTrackRef.current = screenTrack;
+          setScreen(true);
+        });
+    } else {
+      screenTrackRef.current.onended();
+    }
   }
 
   return (
@@ -265,8 +276,12 @@ const Room = ({ match, location }) => {
             );
           })}
         </div>
-        <Toggle userStream={userStream} url={location.pathname} />
-        <button onClick={screen ? stopShare : shareScreen}>공유</button>
+        <Toggle
+          userStream={userStream}
+          url={location.pathname}
+          screen={screen}
+          shareScreen={shareScreen}
+        />
       </div>
       <div className="side">
         <div id="userList">
@@ -290,7 +305,7 @@ const Room = ({ match, location }) => {
             <input
               id="textMsg"
               type="text"
-              autocomplete="off"
+              autoComplete="off"
               value={chat}
               onChange={onChange}
               placeholder="메세지를 입력하세요"

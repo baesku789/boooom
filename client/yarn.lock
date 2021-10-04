@@ -10129,11 +10129,6 @@
   dependencies:
     "picomatch" "^2.2.1"
 
-"record-screen@^3.19.0":
-  "integrity" "sha512-R6Ooy/x6sHK7bDsakkB4Jhge2vbvvckc4W3rUtb4X6azJHIKMyZ4ds5VmCq2mXGf9g0OlE87mIG7vD68mQa7IA=="
-  "resolved" "https://registry.npmjs.org/record-screen/-/record-screen-3.19.0.tgz"
-  "version" "3.19.0"
-
 "recursive-readdir@2.2.2":
   "integrity" "sha512-nRCcW9Sj7NuZwa2XvH9co8NPeXUBhZP7CRKJtU+cS6PW9FpCIFoI5ib0NT1ZrbNuPoRy0ylyCaUL8Gih4LSyFg=="
   "resolved" "https://registry.npmjs.org/recursive-readdir/-/recursive-readdir-2.2.2.tgz"

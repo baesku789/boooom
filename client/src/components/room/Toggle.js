@@ -1,8 +1,8 @@
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import { useState } from "react";
 
 const Toggle = (props) => {
   const userStream = props.userStream;
+  const shareScreen = props.shareScreen;
   // Toggle Video
   let isVideo = true;
   let colorVideo = "#9690d8";
@@ -48,7 +48,7 @@ const Toggle = (props) => {
         {" "}
         <i className="fas fa-video-slash fa-2x"></i>{" "}
       </button>
-      <button id="av" onClick={toggleVideo}>
+      <button id="av" onClick={shareScreen}>
         {" "}
         <i className="fas fa-share-square fa-2x"></i>{" "}
       </button>
