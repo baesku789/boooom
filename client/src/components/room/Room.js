@@ -32,19 +32,16 @@ const Room = ({ match, location }) => {
 
     const chatBox = document.getElementById("chatBox");
 
+    socketRef.current.emit("join", roomID);
+
     socketRef.current.on("message", (message, userName) => {
       console.log(`message user : ${userName}`);
       chatBox.appendChild(messenger(userName, true));
       chatBox.appendChild(makeMessage(message, true));
     });
 
-    socketRef.current.emit("send user name", username);
+    socketRef.current.emit("send user name", username, roomID);
     console.log(`user name : ${username}`);
-
-    socketRef.current.on("send user list", (userNames) => {
-      setUserNames(userNames);
-      console.log(`user names : ${userNames}`);
-    });
 
     // asking for audio and video access
     navigator.mediaDevices
@@ -58,7 +55,7 @@ const Room = ({ match, location }) => {
         console.log("emit join room group");
 
         // getting all user for the new user joining in
-        socketRef.current.on("all users", (users) => {
+        socketRef.current.on("all users", (users, userList) => {
           const peers = [];
           console.log("on all users");
 
@@ -76,10 +73,13 @@ const Room = ({ match, location }) => {
             });
           });
           setPeers(peers);
+          setUserNames(userList);
+
+          console.log(`user names : ${userList}`);
         });
 
         // sending signal to existing users after new user joined
-        socketRef.current.on("user joined", (payload, userNames) => {
+        socketRef.current.on("user joined", (payload, userList) => {
           console.log("on user joined");
           const peer = addPeer(payload.signal, payload.callerID, stream);
           peerRef.current = peer;
@@ -94,7 +94,9 @@ const Room = ({ match, location }) => {
           };
 
           setPeers((users) => [...users, peerObj]);
-          setUserNames(userNames);
+          setUserNames(userList);
+
+          console.log(`user names : ${userList}`);
         });
 
         // exisisting users recieving the signal
@@ -104,7 +106,7 @@ const Room = ({ match, location }) => {
         });
 
         // handling user disconnecting
-        socketRef.current.on("user left", (id, userNames) => {
+        socketRef.current.on("user left", (id, userList) => {
           // finding the id of the peer who just left
           console.log("on user left");
           const peerObj = peersRef.current.find((p) => p.peerID === id);
@@ -117,8 +119,8 @@ const Room = ({ match, location }) => {
           peersRef.current = peers;
           setPeers(peers);
 
-          setUserNames(userNames);
-          console.log(`남은 유저 리스트 : ${userNames}`);
+          setUserNames(userList);
+          console.log(`남은 유저 리스트 : ${userList}`);
         });
       });
   }, []);
@@ -133,11 +135,15 @@ const Room = ({ match, location }) => {
 
     peer.on("signal", (signal) => {
       console.log("create peer on signal");
-      socketRef.current.emit("sending signal", {
-        userToSignal,
-        callerID,
-        signal,
-      });
+      socketRef.current.emit(
+        "sending signal",
+        {
+          userToSignal,
+          callerID,
+          signal,
+        },
+        roomID
+      );
     });
 
     return peer;
@@ -165,7 +171,7 @@ const Room = ({ match, location }) => {
     const chatBox = document.getElementById("chatBox");
     setChat(e.target.value);
     const message = chat;
-    socketRef.current.emit("message", message);
+    socketRef.current.emit("message", message, roomID);
     setChat("");
     chatBox.appendChild(messenger(username, false));
     chatBox.appendChild(makeMessage(message, false));
@@ -176,7 +182,7 @@ const Room = ({ match, location }) => {
       const chatBox = document.getElementById("chatBox");
       setChat(e.target.value);
       const message = chat;
-      socketRef.current.emit("message", message);
+      socketRef.current.emit("message", message, roomID);
       setChat("");
       chatBox.appendChild(messenger(username, false));
       chatBox.appendChild(makeMessage(message, false));
