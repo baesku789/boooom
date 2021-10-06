@@ -247,7 +247,6 @@ const Room = ({ match, location }) => {
           };
 
           userVideo.current.srcObject = stream;
-          userVideo.current.webkitRequestFullscreen();
           screenTrackRef.current = screenTrack;
           setScreen(true);
         });

@@ -22,9 +22,12 @@ const Toggle = (props) => {
   let colorAudio = "#9690d8";
   function toggleAudio() {
     document.getElementById("av").style.backgroundColor = colorAudio;
+    var videoI = document.getElementById("videoI");
     if (isAudio) {
+      videoI.className = "fas fa-microphone-alt fa-2x";
       colorAudio = "#56537a";
     } else {
+      videoI.className = "fas fa-microphone-alt-slash fa-2x";
       colorAudio = "#9690d8";
     }
     isAudio = !isAudio;
@@ -41,7 +44,7 @@ const Toggle = (props) => {
     <div id="button-box">
       <button id="av" onClick={toggleAudio}>
         {" "}
-        <i className="fas fa-microphone-slash fa-2x"></i>{" "}
+        <i id="videoI" className="fas fa-microphone-alt fa-2x"></i>{" "}
       </button>
 
       <button id="av" onClick={toggleVideo}>
